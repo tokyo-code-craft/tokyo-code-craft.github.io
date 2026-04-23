@@ -70,17 +70,6 @@ Sub CreateCurrentMonthSheet()
 End Sub
 
 ' -----------------------------------------------------------------------
-' CreateNextMonthSheet：翌月シートを作成するショートカット
-' 使い方： Alt+F8 → このプロシージャを選択して実行
-' -----------------------------------------------------------------------
-Sub CreateNextMonthSheet()
-    ' DateSerial で翌月1日を算出（12月→翌年1月も正しく処理される）
-    Dim nextMonth As Date
-    nextMonth = DateSerial(Year(Now()), Month(Now()) + 1, 1)
-    CreateMonthSheet Year(nextMonth), Month(nextMonth)
-End Sub
-
-' -----------------------------------------------------------------------
 ' SetupSampleCheckboxes：サンプルシートにチェックボックスを配置する
 ' 使い方： Alt+F8 → このプロシージャを選択して実行（初回1回だけでOK）
 ' ※ サンプルシートはコピー元なので、実際の入力には使わないこと
@@ -253,19 +242,35 @@ Sub CreateMonthSheet(yr As Integer, mo As Integer)
     Const COL_LABEL  As Long = 1   ' A列（チェック項目名）
     Const COL_START  As Long = 2   ' B列（1日目）
 
-    ' ── チェック項目（追加・変更はここだけ修正すればOK） ────────────
-    Dim checkItems(0 To 7) As String
-    checkItems(0) = "朝礼・申し送り確認"
-    checkItems(1) = "メール・チャット確認"
-    checkItems(2) = "スケジュール確認"
-    checkItems(3) = "タスク進捗更新"
-    checkItems(4) = "書類・資料提出"
-    checkItems(5) = "顧客対応ログ記録"
-    checkItems(6) = "経費・申請処理"
-    checkItems(7) = "終業報告・引継ぎ"
+    ' ── チェック項目をサンプルシートのA列から読み取る ──────────────
+    ' サンプルシートのA列（ROW_FIRST行目以降）に書かれた項目をそのまま使う
+    ' 項目の追加・変更はサンプルシートのA列を編集するだけでOK
+    Dim wsSample As Worksheet
+    Set wsSample = Worksheets("サンプル")
+    wsSample.Unprotect Password:=""
 
     Dim itemCount As Integer
-    itemCount = 8  ' checkItems の要素数と合わせる
+    itemCount = 0
+    Do While wsSample.Cells(ROW_FIRST + itemCount, COL_LABEL).Value <> ""
+        itemCount = itemCount + 1
+    Loop
+
+    If itemCount = 0 Then
+        MsgBox "サンプルシートにチェック項目が見つかりません。" & vbCrLf & _
+               "A列（" & ROW_FIRST & "行目以降）に項目を入力してください。", vbCritical
+        wsSample.Protect Password:="", UserInterfaceOnly:=True
+        Exit Sub
+    End If
+
+    Dim checkItems() As String
+    ReDim checkItems(0 To itemCount - 1)
+
+    Dim i As Integer
+    For i = 0 To itemCount - 1
+        checkItems(i) = wsSample.Cells(ROW_FIRST + i, COL_LABEL).Value
+    Next i
+
+    wsSample.Protect Password:="", UserInterfaceOnly:=True
 
     ' ── 変数宣言 ────────────────────────────────────────────────────
     Dim wsNew       As Worksheet
@@ -461,3 +466,42 @@ Function SheetExists(sheetName As String) As Boolean
     SheetExists = Not ws Is Nothing
 End Function
 ```
+
+# 祝日
+
+| 日付 | 祝日名 |
+|---|---|
+| 2026/1/1 | 元日 |
+| 2026/1/12 | 成人の日 |
+| 2026/2/11 | 建国記念の日 |
+| 2026/2/23 | 天皇誕生日 |
+| 2026/3/20 | 春分の日 |
+| 2026/4/29 | 昭和の日 |
+| 2026/5/3 | 憲法記念日 |
+| 2026/5/4 | みどりの日 |
+| 2026/5/5 | こどもの日 |
+| 2026/5/6 | 振替休日 |
+| 2026/7/20 | 海の日 |
+| 2026/8/11 | 山の日 |
+| 2026/9/21 | 敬老の日 |
+| 2026/9/22 | 国民の休日 |
+| 2026/9/23 | 秋分の日 |
+| 2026/10/12 | スポーツの日 |
+| 2026/11/3 | 文化の日 |
+| 2026/11/23 | 勤労感謝の日 |
+| 2027/1/1 | 元日 |
+| 2027/1/11 | 成人の日 |
+| 2027/2/11 | 建国記念の日 |
+| 2027/2/23 | 天皇誕生日 |
+| 2027/3/21 | 春分の日 |
+| 2027/4/29 | 昭和の日 |
+| 2027/5/3 | 憲法記念日 |
+| 2027/5/4 | みどりの日 |
+| 2027/5/5 | こどもの日 |
+| 2027/7/19 | 海の日 |
+| 2027/8/11 | 山の日 |
+| 2027/9/20 | 敬老の日 |
+| 2027/9/23 | 秋分の日 |
+| 2027/10/11 | スポーツの日 |
+| 2027/11/3 | 文化の日 |
+| 2027/11/23 | 勤労感謝の日 |
