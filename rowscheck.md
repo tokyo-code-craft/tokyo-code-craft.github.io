@@ -1,6 +1,10 @@
 ---
 ---
 
+# Excel画面サンプル
+
+![Excel画面サンプル](./img/execl_img03.png)
+
 # sample
 
 ```vba
@@ -36,4 +40,49 @@ Function GetGroup(startCell As Range) As Range
                             ws.Cells(groupEnd, typeCol))
 
 End Function
+```
+# sample2
+
+```vba
+Dim deleteRange As Range  ' 削除対象を蓄積
+Dim grp As Range
+Dim i As Long
+Dim lastRow As Long
+
+lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+i = 2
+
+Do While i <= lastRow
+
+    Set grp = GetGroup(ws.Cells(i, 1))
+
+    If Not grp Is Nothing Then
+
+        ' ○/×判定して削除対象を収集
+        If grp.Rows.Count > 1 Then
+            If grp.Cells(2, 1).Value = "○" Then
+                Dim r As Range
+                For Each r In grp.Cells
+                    If r.Value = "×" Then
+                        If deleteRange Is Nothing Then
+                            Set deleteRange = r
+                        Else
+                            Set deleteRange = Union(deleteRange, r)
+                        End If
+                    End If
+                Next r
+            End If
+        End If
+
+        i = grp.Cells(grp.Rows.Count, 1).Row + 1  ' 次のグループ先頭へ
+    Else
+        i = i + 1
+    End If
+
+Loop
+
+' 最後に一括削除
+If Not deleteRange Is Nothing Then
+    deleteRange.EntireRow.Delete
+End If
 ```
